@@ -27,6 +27,11 @@
       *                                                <MARCA>2404     *00180099
       *    SE SOLUCIONA REPARTO   SINIESTROS CUANDO EL BONO ES A       *00190099
       *    FUTURO                                                      *00200099
+      ******************************************************************
+060326*  MODIFICACION: 06.03.2023   - ETIQUETA <060326>                *
+060326*                CORRIGE CALCULA CTA RESULTADOS EN PBAN USANDO   *
+060326*                EL ACUMULADO EN LA TABLA DE IMPORTES SINIESTROS *
+060326*                POR PERIODO                                     *
       ******************************************************************00330099
       *----------------------------------------------------------------*00350099
        ENVIRONMENT DIVISION.                                            00360099
@@ -3624,7 +3629,8 @@ PBTEC *2701                            X350JPX4-PRIMA-ANUAL
                      MOVE ZEROES TO WS-IMPORTE-REPARTOS
                   ELSE
                   COMPUTE WS-IMPORTE-REPARTOS = ((WS-IMPORTE-PERIOD -
-                                                WS-IMPORTE-206    -
+060326*                                         WS-IMPORTE-206    -
+060326                                          TB-ACUMULADO-206 (2) -
                                                 WS-IMP-GASTOS) *
                                                 X350JPX5-PRIMA-ANUAL) /
                                                  X350JPX5-PRIMA-ANUAL
@@ -5575,7 +5581,7 @@ SINUSO*MF001 INITIALIZE DATOS-CTEC
                 MOVE ZEROES TO X350JPX6-PRIMA-ANUAL
 
                 MOVE '3000'                   TO RSAL-MODELO
-                MOVE X350JXX2-RENO-DESDE TO WS-FECHA-AUX-CNTL
+                MOVE X350JXX2-FRENO-DESDE TO WS-FECHA-AUX-CNTL
 
                 COMPUTE WS-ANIO-CNTL = WS-ANIO-CNTL + 1
 
@@ -9994,7 +10000,7 @@ RF001         IF WS-RENOVADA EQUAL "N" AND SW-SI-LTA-SOLO-ANT-P
 RF001            CONTINUE
 RF001         ELSE
                  WRITE REG-SALIDA1 FROM RSALIDA
-                 WRITE REG-SALIDA3 FROM X350JPX6f
+                 WRITE REG-SALIDA3 FROM X350JPX6
 
 RF001         END-IF
            MOVE WS-POLIZA-2 TO WS-POLIZA-2-ANT
