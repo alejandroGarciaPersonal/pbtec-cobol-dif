@@ -11,6 +11,7 @@
 //* MODIFICADA: 30/01/2025  RF02000804
 //* MODIFICADA: 25/02/2025  RF02022093
 //* MODIFICADA: 18/03/2025  RF02039984
+//* MODIFICADA: 23/03/2025  RF02327259
 //**********************************************************************
 //*
 //*               PARTICIPACION BENEFICIOS
@@ -60,10 +61,6 @@
 //ENTRADA  DD *
   LISTCAT LEVEL(EXPLO.P0323575)
 //*
-
-//* ENTRADA: Cartera técnica del modelo 3000, filtrada a partir de las
-//* pólizas con fecha validada.  
-
 //**********************************************************************
 //PASO010  EXEC PGM=SORT,REGION=0M
 //**********************************************************************
@@ -78,10 +75,6 @@
 /*
 //SYSOUT   DD SYSOUT=*
 //SYSPRINT DD SYSOUT=*
-
-//* JOIN: Incluir ramo en la cartera técnica del modelo 3000, solo incluir
-//* aquellos registros que haya en ambos, y formatear la cartera 
-
 //**********************************************************************
 //PASO020  EXEC PGM=SORT,REGION=0M
 //**********************************************************************
@@ -106,9 +99,6 @@
 /*
 //SYSOUT   DD SYSOUT=*
 //SYSPRINT DD SYSOUT=*
-
-//* SORT: Ordenar cartera técnica mod 3000 con ramo
-
 //**********************************************************************
 //PASO030  EXEC PGM=SORT,REGION=0M
 //**********************************************************************
@@ -121,11 +111,6 @@
 /*
 //SYSOUT   DD SYSOUT=*
 //SYSPRINT DD SYSOUT=*
-
-//* SORT: Full outer join. Une el modelo 3000 con la cartera técnica que contiene (MAVI + MCMV)
-//* En el SORTOUT1: salen los registros que existen en ambos archivos
-//* En el SORTOUT2: solo los registros que estan en el modelo 3000 y no en el cartera técnica (MAVI + MCMV)
-
 //**********************************************************************
 //PASO040  EXEC PGM=SORT,REGION=0M
 //**********************************************************************
@@ -154,9 +139,6 @@
 /*
 //SYSOUT   DD SYSOUT=*
 //SYSPRINT DD SYSOUT=*
-
-//* SORT: Ordena el SORTOUT2 del paso anterior
-
 //**********************************************************************
 //PASO050  EXEC PGM=SORT,REGION=0M
 //**********************************************************************
@@ -170,10 +152,6 @@
 /*
 //SYSOUT   DD SYSOUT=*
 //SYSPRINT DD SYSOUT=*
-
-//* SORT: Se vuelven a cruzar los registros sin pareja que obtuviese en PASO040
-//* con el archivo de cartera técnica, pero ahora usa una clave más corta
-
 //**********************************************************************
 //PASO060  EXEC PGM=SORT,REGION=0M
 //**********************************************************************
@@ -197,9 +175,6 @@
 /*
 //SYSOUT   DD SYSOUT=*
 //SYSPRINT DD SYSOUT=*
-
-//* SORT: Ordena el paso anterior por POLIZA
-
 //**********************************************************************
 //PASO070  EXEC PGM=SORT,REGION=0M
 //**********************************************************************
@@ -213,12 +188,6 @@
 /*
 //SYSOUT   DD SYSOUT=*
 //SYSPRINT DD SYSOUT=*
-
-
-//* SORT: Con los datos cruzados en 2do intento con la cartera técnica. 
-//* Solo mantiene los registros que coinciden en la clave; filtra los registros 
-//* y los formatea
-
 //**********************************************************************
 //PASO080  EXEC PGM=SORT,REGION=0M
 //**********************************************************************
@@ -242,9 +211,6 @@
 /*
 //SYSOUT   DD SYSOUT=*
 //SYSPRINT DD SYSOUT=*
-
-//* SORT: reformatea cietos campos del paso anteior
-
 //*********************************************************************
 //PASO090  EXEC PGM=SORT,REGION=0M
 //*********************************************************************
@@ -260,14 +226,7 @@
 //SYSIN    DD *
  SORT FIELDS=COPY
   OUTREC FIELDS=(1,148,149,12,ZD,TO=PD,LENGTH=7,160,8)
-
-
-
-
-/* SORT: se unen los registro del modelo 3000 que no cruzaron en 1ra ocasión con la cartera téncica
-/* con los registros que si cruzaron en 1ra ocasión
-
-
+/*
 //**********************************************************************
 //PASO100  EXEC PGM=SORT,REGION=0M
 //**********************************************************************
@@ -283,9 +242,6 @@
 /*
 //SYSOUT   DD SYSOUT=*
 //SYSPRINT DD SYSOUT=*
-
-
-
 //**********************************************************************
 //PASO110  EXEC PGM=SORT,REGION=0M
 //**********************************************************************
@@ -635,7 +591,7 @@ END
 //**********************************************************************
 //SORTJNF1 DD DSN=EXPLO.P0323575.CTPB.EXT.SORT2,
 //            DISP=SHR
-//SORTJNF2 DD DSN=EXPLO.P0323574.B350JI83.SORTOUT, (PASO306)
+//SORTJNF2 DD DSN=EXPLO.P0323574.B350JI83.SORTOUT,
 //            DISP=SHR
 //SORTOUT  DD DSN=EXPLO.P0323575.CTPB.EXT.SORT3,
 //            DISP=(,CATLG,DELETE),SPACE=(TRK,(5000,500),RLSE),
@@ -676,34 +632,29 @@ END
 /*
 //SYSOUT   DD SYSOUT=*
 //SYSPRINT DD SYSOUT=*
-
-// CÁLCULO
-
+//*
 //*********************************************************************
 //PASO300  EXEC PGM=IKJEFT01,DYNAMNBR=100,REGION=0M
 //*********************************************************************
 //SYSTSIN  DD *
  DSN SYSTEM(DSNR)
- RUN PROGRAM(B350JI11) PLAN(PLURBAT)
+ RUN PROGRAM(B350JI20) PLAN(PLURBAT)
 END
 /*
 // INCLUDE MEMBER=IDMSDD02
 // INCLUDE MEMBER=RCOLVIDA A=N
 // INCLUDE MEMBER=RGSCAR   A=N
 // INCLUDE MEMBER=RCOSETE  A=N
-// INCLUDE MEMBER=RREDTER  A=N
+//*INCLUDE MEMBER=RREDTER  A=N
 // INCLUDE MEMBER=RDAGENER A=N
 //SYS006   DD DSN=EXPLO.P0323573.B350J028.FICHA,DISP=SHR
 //SYS001   DD DSN=EXPLO.P0323575.CTPB.EXT.SORT3,DISP=SHR
-//SYS002   DD DSN=EXPLO.P0323574.B350J084.SYS003,DISP=SHR  
+//SYS002   DD DSN=EXPLO.P0323574.B350J084.SYS003,DISP=SHR
 //SYS012   DD DSN=EXPLO.P0323574.B350JX84.SYS003.BONO,DISP=SHR
 //SYS013   DD DSN=EXPLO.P0323574.B350JZ84.SYS003,DISP=SHR
 //SYS014   DD DSN=EXPLO.P0323575.PASO294.JOIN,DISP=SHR
 //***      FICOL LREC=1264
 //*
-
-// SALIDA
-
 //SYS004   DD DSN=EXPLO.P0323575.CASOUS03.FICHPBT.SJI03,
 //            DISP=(,CATLG,DELETE),UNIT=(SYSDA,3),
 //            SPACE=(TRK,(1000,500),RLSE),
@@ -725,9 +676,6 @@ END
 //SYSPRINT DD SYSOUT=*
 //SYSUDUMP DD SYSOUT=*
 //*
-
-//* FILTRA POR RSAL-LTA  = PLURI
-
 //**********************************************************************
 //PASO310  EXEC PGM=SORT,REGION=0M
 //**********************************************************************
@@ -744,9 +692,6 @@ END
  SORT FIELDS=COPY
   INCLUDE COND=(439,5,CH,EQ,C'PLURI')
 /*
-
-//* FILTRA POR RSAL-LTA  = PLURA
-
 //**********************************************************************
 //PASO320  EXEC PGM=SORT,REGION=0M
 //**********************************************************************
@@ -762,9 +707,6 @@ END
 //SYSIN    DD *
  SORT FIELDS=COPY
   INCLUDE COND=(439,5,CH,EQ,C'PLURA')
-
-//* PLURI.TOTPOL = PLURI TOTALIZADO POR POLIZA
-
 /*
 //*********************************************************************
 //PASO330  EXEC PGM=SORT,REGION=0M
@@ -782,10 +724,6 @@ END
  SORT FIELDS=(07,11,CH,A)
   SUM FIELDS=(186,13,ZD,235,18,ZD,253,18,ZD,271,18,ZD,445,18,ZD)
 /*
-
-//* PLURI.TPOLSP = PLURI.TOTPOL quedándose con registros con GEMPRESA 
-//* vacia
-
 //*********************************************************************
 //PASO331  EXEC PGM=SORT,REGION=0M
 //*********************************************************************
@@ -802,9 +740,6 @@ END
  SORT FIELDS=COPY
  INCLUDE COND=(146,3,CH,EQ,C'   ')
 /*
-
-//* PLURI.TPOLGP = PLURI.TOTPOL quedándose con registros con GEMPRESA relleno
-
 //*********************************************************************
 //PASO332  EXEC PGM=SORT,REGION=0M
 //*********************************************************************
@@ -821,9 +756,6 @@ END
  SORT FIELDS=COPY
  INCLUDE COND=(146,3,CH,NE,C'   ')
 /*
-
-//* LO MISMO PARA PLURA (340, 341, 342)
-
 //*********************************************************************
 //PASO340  EXEC PGM=SORT,REGION=0M
 //*********************************************************************
@@ -872,9 +804,6 @@ END
  SORT FIELDS=COPY
  INCLUDE COND=(146,3,CH,NE,C'   ')
 /*
-
-//* Totaliza PLURI por GEMPRESA
-
 //*********************************************************************
 //PASO350  EXEC PGM=SORT,REGION=0M
 //*********************************************************************
@@ -891,9 +820,6 @@ END
  SORT FIELDS=(146,3,CH,A)
   SUM FIELDS=(186,13,ZD,235,18,ZD,253,18,ZD,271,18,ZD,445,18,ZD)
 /*
-
-//* Ordena PLURI por GEMPRESA / POL 
-
 //*********************************************************************
 //PASO351  EXEC PGM=SORT,REGION=0M
 //*********************************************************************
@@ -910,9 +836,6 @@ END
 //SYSIN    DD *
  SORT FIELDS=(146,3,CH,A,7,11,CH,A)
 /*
-
-//* Totaliza PLURA por GEMPRESA
-
 //*********************************************************************
 //PASO360  EXEC PGM=SORT,REGION=0M
 //*********************************************************************
@@ -929,9 +852,6 @@ END
  SORT FIELDS=(146,3,CH,A)
   SUM FIELDS=(186,13,ZD,235,18,ZD,253,18,ZD,271,18,ZD,445,18,ZD)
 /*
-
-//* Filtra por BONO y RENOVADA
-
 //*********************************************************************
 //PASO370  EXEC PGM=SORT,REGION=0M
 //*********************************************************************
@@ -948,9 +868,6 @@ END
  SORT FIELDS=COPY
   INCLUDE COND=(439,5,CH,EQ,C'BONO ',AND,99,1,CH,EQ,C'S')
 /*
-
-//* Filtra por BONO y NO RENOVADA
-
 //*********************************************************************
 //PASO371  EXEC PGM=SORT,REGION=0M
 //*********************************************************************
@@ -967,9 +884,6 @@ END
  SORT FIELDS=COPY
   INCLUDE COND=(439,5,CH,EQ,C'BONO ',AND,99,1,CH,EQ,C'N')
 /*
-
-//* Filtra por BONOA
-
 //********************************************************************
 //PASO380  EXEC PGM=SORT,REGION=0M
 //********************************************************************
@@ -986,9 +900,6 @@ END
  SORT FIELDS=COPY
   INCLUDE COND=(439,5,CH,EQ,C'BONOA')
 /*
-
-//* Totaliza por BONOR por POLIZA
-
 //*********************************************************************
 //PASO390  EXEC PGM=SORT,REGION=0M
 //*********************************************************************
@@ -1005,9 +916,6 @@ END
  SORT FIELDS=(07,11,CH,A)
   SUM FIELDS=(186,13,ZD,235,18,ZD,253,18,ZD,271,18,ZD,445,18,ZD)
 /*
-
-//* Totaliza BONOA por poliza/subpoliza
-
 //*********************************************************************
 //PASO400  EXEC PGM=SORT,REGION=0M
 //*********************************************************************
@@ -2020,12 +1928,12 @@ END
 // INCLUDE MEMBER=RCOLVIDA A=N
 // INCLUDE MEMBER=RGSCAR   A=N
 // INCLUDE MEMBER=RCOSETE  A=N
-// INCLUDE MEMBER=RREDTER  A=N
+//*INCLUDE MEMBER=RREDTER  A=N
 // INCLUDE MEMBER=RDAGENER A=N
 //SYS001   DD DSN=EXPLO.P0323575.CTPB.EXT.SORT4,DISP=SHR
 //SYS002   DD DSN=EXPLO.P0323575.B350J084.SYS003.PRU,DISP=SHR
 //SYS003   DD DSN=EXPLO.P0323575.CTPB.EXT.TASE.SORTOUT.T,DISP=SHR
-//SYS006   DD DSN=EXPLO.P0323575.CTPB.EXT.TASE.SORTOUT.T,DISP=SHR
+//SYS006   DD DSN=EXPLO.P0323573.B350J028.FICHA,DISP=SHR
 //SYS007   DD DSN=EXPLO.P0323575.CTPB.EXT.TASE,DISP=SHR
 //SYS008   DD DSN=EXPLO.P0323575.CASOUS03.FICHPBT.CONPRI,DISP=SHR
 //SYS011   DD DSN=EXPLO.P0323575.PASO790.JOIN,DISP=SHR
@@ -2064,7 +1972,7 @@ END
 //SYSUDUMP DD SYSOUT=*
 //SYSTSIN  DD *
  DSN SYSTEM(DSNR)
- RUN PROGRAM(B350JI12) PLAN(PLURBAT)
+ RUN PROGRAM(B350JI21) PLAN(PLURBAT)
 END
 /*
 //*
@@ -2172,126 +2080,40 @@ END
 //SYSIN    DD *
  SORT FIELDS=COPY
 /*
-//*******************************************************************
-//*//PASO890  EXEC PGM=IKJEFT01,DYNAMNBR=100,REGION=0M
-//*******************************************************************
-//* EJECUCION PROGRAMA B350J085
-//*******************************************************************
-//*//SYSTSIN  DD *
-//* DSN SYSTEM(DSNR)
-//* RUN PROGRAM(B350J105) PLAN(PLCSBAT)
-//*END
-//*//SYSTSPRT DD SYSOUT=*
-//*//SYSPRINT DD SYSOUT=*
-//*//SYSUDUMP DD SYSOUT=*
-//*//SYSIN    DD *
-//*%%F1
-//*//*YSOUT   DD SYSOUT=*
-//*//SYSOUT   DD DSN=EXPLO.P0323575.B350J085.SYSOUT,
-//*//         DISP=(NEW,CATLG,DELETE),
-//*//         UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
-//*//         DCB=(DSORG=PS,RECFM=FB,LRECL=133,BLKSIZE=0)
-//*//SYSDBOUT DD SYSOUT=*
-//*//SYS001   DD DSN=EXPLO.P0323573.B350J028.FICHA,DISP=SHR
-//*//SYS002   DD DSN=EXPLO.P0323574.B350J084.SYS003,DISP=SHR
-//*//SYS003   DD DSN=EXPLO.P0323575.B350J085.SYS003.PRUEBA,
-//*//         DISP=(NEW,CATLG,DELETE),
-//*//         UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
-//*//         DCB=(DSORG=PS,RECFM=FB,LRECL=650,BLKSIZE=0)
-//*//*
 //**********************************************************************
 //PASO890  EXEC PGM=B350J105,REGION=0M
 //**********************************************************************
 //SYSIN    DD *
 %%F1
 //SYS001   DD DSN=EXPLO.P0323573.B350J028.FICHA,DISP=SHR
-//SYS002   DD DSN=EXPLO.P0323574.B350J084.SYS003,DISP=SHR
-//SYS003   DD DSN=EXPLO.P0323575.B350J085.SYS003.PRUEBA,
+//*YS002   DD DSN=EXPLO.P0323574.B350J084.SYS003,DISP=SHR
+//SYS002   DD DSN=EXPLO.P0323574.B350J108.SYS003,DISP=SHR
+//*YS003   DD DSN=EXPLO.P0323575.B350J085.SYS003.PRUEBA,
+//SYS003   DD DSN=EXPLO.P0323575.B350J105.SYS003.PRUEBA,
 //         DISP=(NEW,CATLG,DELETE),
 //         UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
 //         DCB=(DSORG=PS,RECFM=FB,LRECL=650,BLKSIZE=0)
 //SYSDBOUT DD SYSOUT=*
-//*YSOUT   DD SYSOUT=*
-//SYSOUT   DD DSN=EXPLO.P0323575.B350J085.SYSOUT,
-//         DISP=(NEW,CATLG,DELETE),
-//         UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
-//         DCB=(DSORG=PS,RECFM=FB,LRECL=133,BLKSIZE=0)
+//SYSOUT   DD SYSOUT=*
 //SYSUDUMP DD SYSOUT=*
 //*
 //*
-//*******************************************************************
-//*//PASO900  EXEC PGM=IKJEFT01,DYNAMNBR=100,REGION=0M
-//*******************************************************************
-//* EJECUCION PROGRAMA B350J085
-//*******************************************************************
-//*//SYSTSIN  DD *
-//* DSN SYSTEM(DSNR)
-//* RUN PROGRAM(B350J105) PLAN(PLCSBAT)
-//*END
-//*//SYSTSPRT DD SYSOUT=*
-//*//SYSPRINT DD SYSOUT=*
-//*//SYSUDUMP DD SYSOUT=*
-//*//SYSIN    DD *
-//*%%F1
-//*//*YSOUT   DD SYSOUT=*
-//*//SYSOUT   DD DSN=EXPLO.P0323575.B350JX85.SYSOUT,
-//*//         DISP=(NEW,CATLG,DELETE),
-//*//         UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
-//*//         DCB=(DSORG=PS,RECFM=FB,LRECL=133,BLKSIZE=0)
-//*//*SYSDBOUT DD SYSOUT=*
-//*//SYS001   DD DSN=EXPLO.P0323573.B350J028.FICHA,DISP=SHR
-//*//SYS002   DD DSN=EXPLO.P0323574.B350JX84.SYS003.BONO,DISP=SHR
-//*//SYS003   DD DSN=EXPLO.P0323575.B350JX85.SYS003.PRUEBA,
-//*//         DISP=(NEW,CATLG,DELETE),
-//*//         UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
-//*//         DCB=(DSORG=PS,RECFM=FB,LRECL=650,BLKSIZE=0)
-//*//*
 //**********************************************************************
 //PASO900  EXEC PGM=B350J105,REGION=0M
 //**********************************************************************
 //SYSIN    DD *
 %%F1
 //SYS001   DD DSN=EXPLO.P0323573.B350J028.FICHA,DISP=SHR
-//SYS002   DD DSN=EXPLO.P0323574.B350JX84.SYS003.BONO,DISP=SHR
-//SYS003   DD DSN=EXPLO.P0323575.B350JX85.SYS003.PRUEBA,
+//*YS002   DD DSN=EXPLO.P0323574.B350JX84.SYS003.BONO,DISP=SHR
+//SYS002   DD DSN=EXPLO.P0323574.B350JX08.SYS003.BONO,DISP=SHR
+//*YS003   DD DSN=EXPLO.P0323575.B350JX85.SYS003.PRUEBA,
+//SYS003   DD DSN=EXPLO.P0323575.B350JX05.SYS003.PRUEBA,
 //         DISP=(NEW,CATLG,DELETE),
 //         UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
 //         DCB=(DSORG=PS,RECFM=FB,LRECL=650,BLKSIZE=0)
 //SYSDBOUT DD SYSOUT=*
-//*YSOUT   DD SYSOUT=*
-//SYSOUT   DD DSN=EXPLO.P0323575.B350JX85.SYSOUT,
-//         DISP=(NEW,CATLG,DELETE),
-//         UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
-//         DCB=(DSORG=PS,RECFM=FB,LRECL=133,BLKSIZE=0)
+//SYSOUT   DD SYSOUT=*
 //SYSUDUMP DD SYSOUT=*
-//*
-//*******************************************************************
-//*//PASO910  EXEC PGM=IKJEFT01,DYNAMNBR=100,REGION=0M
-//*******************************************************************
-//* EJECUCION PROGRAMA B350J085
-//*******************************************************************
-//*//SYSTSIN  DD *
-//* DSN SYSTEM(DSNR)
-//* RUN PROGRAM(B350J105) PLAN(PLCSBAT)
-//*END
-//*//SYSTSPRT DD SYSOUT=*
-//*//SYSPRINT DD SYSOUT=*
-//*//SYSUDUMP DD SYSOUT=*
-//*//SYSIN    DD *
-//*%%F1
-//*//*YSOUT   DD SYSOUT=*
-//*//SYSOUT   DD DSN=EXPLO.P0323575.B350JZ85.SYSOUT,
-//*//         DISP=(NEW,CATLG,DELETE),
-//*//         UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
-//*//         DCB=(DSORG=PS,RECFM=FB,LRECL=133,BLKSIZE=0)
-//*//SYSDBOUT DD SYSOUT=*
-//*//SYS001   DD DSN=EXPLO.P0323573.B350J028.FICHA,DISP=SHR
-//*//SYS002   DD DSN=EXPLO.P0323574.B350JZ84.SYS003,DISP=SHR
-//*//SYS003   DD DSN=EXPLO.P0323575.B350JZ85.SYS003.PRUEBA,
-//*//         DISP=(NEW,CATLG,DELETE),
-//*//         UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
-//*//         DCB=(DSORG=PS,RECFM=FB,LRECL=650,BLKSIZE=0)
-//*
 //*
 //**********************************************************************
 //PASO910  EXEC PGM=B350J105,REGION=0M
@@ -2299,21 +2121,507 @@ END
 //SYSIN    DD *
 %%F1
 //SYS001   DD DSN=EXPLO.P0323573.B350J028.FICHA,DISP=SHR
-//SYS002   DD DSN=EXPLO.P0323574.B350JZ84.SYS003,DISP=SHR
-//SYS003   DD DSN=EXPLO.P0323575.B350JZ85.SYS003.PRUEBA,
+//*YS002   DD DSN=EXPLO.P0323574.B350JZ84.SYS003,DISP=SHR
+//SYS002   DD DSN=EXPLO.P0323574.B350JZ08.SYS003,DISP=SHR
+//*YS003   DD DSN=EXPLO.P0323575.B350JZ85.SYS003.PRUEBA,
+//SYS003   DD DSN=EXPLO.P0323575.B350JZ05.SYS003.PRUEBA,
 //         DISP=(NEW,CATLG,DELETE),
 //         UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
 //         DCB=(DSORG=PS,RECFM=FB,LRECL=650,BLKSIZE=0)
 //SYSDBOUT DD SYSOUT=*
-//*YSOUT   DD SYSOUT=*
-//SYSOUT   DD DSN=EXPLO.P0323575.B350JZ85.SYSOUT,
-//         DISP=(NEW,CATLG,DELETE),
-//         UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
-//         DCB=(DSORG=PS,RECFM=FB,LRECL=133,BLKSIZE=0)
+//SYSOUT   DD SYSOUT=*
 //SYSUDUMP DD SYSOUT=*
 //*
-//**************************************************
+//**********************************************************************
 //PASO920  EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* DESDOBLAMOS SINIESTROS DEL RESTO DEL LISTADO
+//**********************************************************************
+//*
+//SORTIN   DD  DSN=EXPLO.P0323574.PASO290.SORT.AMBOS,DISP=SHR
+//*INCLUYE AL FINAL ETIQUETA SIDMS/SNEO PARA USO POSTERIOR
+//SORTOUT  DD  DSN=EXPLO.P0323575.PASO920.SORT,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=255,BLKSIZE=0)
+//*
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=(1,10,A,11,4,A,15,9,A,150,8,A,117,1,D),FORMAT=BI
+ INCLUDE COND=(117,1,CH,NE,C' ')
+ OUTFIL IFTHEN=(WHEN=(117,1,CH,EQ,C'I'),BUILD=(1,247,C' SIDMS  ')),
+        IFTHEN=(WHEN=(117,1,CH,EQ,C'2'),BUILD=(1,247,C' SIDMS2 ')),
+        IFTHEN=(WHEN=(117,1,CH,EQ,C'3'),BUILD=(1,247,C' SIDMS3 ')),
+        IFTHEN=(WHEN=(117,1,CH,EQ,C'N'),BUILD=(1,247,C' SNEO   ')),
+        IFTHEN=(WHEN=(117,1,CH,EQ,C' '),BUILD=(1,247,C'        '))
+/*
+//*
+//**********************************************************************
+//PASO930   EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* RENUMERO REGISTROS DEL LISTADO PARA "DESDOBLARLO"
+//**********************************************************************
+//SORTIN   DD  DSN=EXPLO.P0323575.B350J105.SYS003.PRUEBA,DISP=SHR
+//SORTOUT  DD  DSN=EXPLO.P0323575.PASO930.B350J105.LISTNUM,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
+//             DCB=(DSORG=PS,RECFM=FB,LRECL=690,BLKSIZE=0)
+//*            DCB=*.SORTIN
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=COPY
+ OUTREC BUILD=(SEQNUM,6,ZD,C' 000 ',104,27,C'  ',1,650)
+/*
+//*********************************************************************
+//PASO940  EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* DESDOBLAMOS SINIESTROS DEL RESTO DEL LISTADO
+//**********************************************************************
+//*
+//SORTIN   DD  DSN=EXPLO.P0323575.PASO930.B350J105.LISTNUM,DISP=SHR
+//* EL FICHERO ESTA ORDENADO (46,10,57,4,18,9) - POL, SUP, EXPEDTE
+//SORTSIN  DD  DSN=EXPLO.P0323575.PASO940.B350J105.LIST0206,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=690,BLKSIZE=0)
+//*
+//SORTRES  DD  DSN=EXPLO.P0323575.PASO940.B350J105.LISTREST,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=690,BLKSIZE=0)
+//*
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=COPY
+ OPTION COPY
+  OUTFIL FNAMES=SORTSIN,INCLUDE=(13,4,CH,EQ,C'0206')
+  OUTFIL FNAMES=SORTRES,INCLUDE=(13,4,CH,NE,C'0206')
+ END
+/*
+//*
+//*********************************************************************
+//PASO950  EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* DESDOBLAMOS SINIESTROS DEL RESTO DEL LISTADO
+//**********************************************************************
+//*
+//SORTIN   DD  DSN=EXPLO.P0323575.PASO940.B350J105.LIST0206,DISP=SHR
+//* EL FICHERO ESTA ORDENADO (46,10,57,4,18,9) - POL, SUP, EXPEDTE
+//SORTOUT  DD  DSN=EXPLO.P0323575.PASO950.B350J105.LIST0206,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=690,BLKSIZE=0)
+//*
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=(46,10,A,57,4,A,18,9,A),FORMAT=BI
+/*
+//*
+//**********************************************************************
+//PASO960   EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* CRUCE SINIESTROS EXTENDIDO CON LINEAS-LISTADO SINIESTRO
+//*******************************************************************
+//*COPY R350TE26 + EXTENSION ETIQUETA 8 POS
+//SORTJNF1 DD DSN=EXPLO.P0323575.PASO920.SORT,
+//            DISP=SHR
+//*LISTADO MOVIMIENTOS: SOLO REGISTRO 0206
+//SORTJNF2 DD DSN=EXPLO.P0323575.PASO950.B350J105.LIST0206,
+//            DISP=SHR
+//AMBOS1   DD DSN=EXPLO.P0323575.PASO960.JOIN.AMBOS,
+//            DISP=(,CATLG,DELETE),SPACE=(TRK,(1000,500),RLSE),
+//            DCB=(RECFM=FB,LRECL=690,BLKSIZE=0),UNIT=(SYSDA,3)
+//AMBOS2   DD DSN=EXPLO.P0323575.PASO960.JOIN.AMBOSDEC,
+//            DISP=(,CATLG,DELETE),SPACE=(TRK,(1000,500),RLSE),
+//            DCB=(RECFM=FB,LRECL=730,BLKSIZE=0),UNIT=(SYSDA,3)
+//F1       DD DSN=EXPLO.P0323575.PASO960.JOIN.F1,
+//            DISP=(,CATLG,DELETE),SPACE=(TRK,(1000,500),RLSE),
+//            DCB=(RECFM=FB,LRECL=255,BLKSIZE=0),UNIT=(SYSDA,3)
+//F2       DD DSN=EXPLO.P0323575.PASO960.JOIN.F2,
+//            DISP=(,CATLG,DELETE),SPACE=(TRK,(1000,500),RLSE),
+//            DCB=(RECFM=FB,LRECL=690,BLKSIZE=0),UNIT=(SYSDA,3)
+//SYSIN    DD *
+ JOINKEYS FILE=F1,FIELDS=(1,10,A,11,4,A,15,9,A),SORTED
+ JOINKEYS FILE=F2,FIELDS=(46,10,A,57,4,A,18,9,A),SORTED
+ JOIN UNPAIRED,F1,F2
+ REFORMAT FIELDS=(F1:1,255,F2:1,690,?)
+ SORT FIELDS=COPY
+
+ OUTFIL FNAMES=AMBOS1,INCLUDE=(946,1,CH,EQ,C'B'),
+ BUILD=(256,690)
+ OUTFIL FNAMES=AMBOS2,INCLUDE=(946,1,CH,EQ,C'B'),
+ BUILD=(1,23,150,8,249,6,C'   ',256,197,
+        C'00000000;                  ;                  ;',
+        500,2,C';',249,6,C';',159,8,C';',150,8,C';',
+        168,13,ZD,EDIT=(SI.III.IIT,TT),SIGNS=(,-),C';',
+        182,13,ZD,EDIT=(SI.III.IIT,TT),SIGNS=(,-),C';',
+        119,4,C';',385C' ')
+ OUTFIL FNAMES=F1,INCLUDE=(946,1,CH,EQ,C'1'),
+ BUILD=(1,255)
+ OUTFIL FNAMES=F2,INCLUDE=(946,1,CH,EQ,C'2'),
+ BUILD=(256,690)
+/*
+//SYSOUT   DD SYSOUT=*
+//SYSPRINT DD SYSOUT=*
+//*
+//*********************************************************************
+//PASO970  EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* DESDOBLAMOS SINIESTROS DEL RESTO DEL LISTADO
+//**********************************************************************
+//*
+//SORTIN   DD  DSN=EXPLO.P0323575.PASO960.JOIN.AMBOSDEC,DISP=SHR
+//* EL FICHERO ESTA ORDENADO (46,10,57,4,18,9) - POL, SUP, EXPEDTE
+//SORTOUT  DD  DSN=EXPLO.P0323575.PASO970.JOIN.AMBOSDEC,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=690,BLKSIZE=0)
+//*
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=(1,40,A),FORMAT=BI
+ INREC IFTHEN=(WHEN=INIT,
+                OVERLAY=(48:SEQNUM,3,ZD,START=1,RESTART=(1,23)))
+ OUTREC FIELDS=(41,690)
+/*
+//*
+//*********************************************************************
+//PASO980  EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* DESDOBLAMOS SINIESTROS DEL RESTO DEL LISTADO
+//**********************************************************************
+//*
+//SORTIN   DD  DSN=EXPLO.P0323575.PASO950.B350J105.LIST0206,DISP=SHR
+//         DD  DSN=EXPLO.P0323575.PASO940.B350J105.LISTREST,DISP=SHR
+//         DD  DSN=EXPLO.P0323575.PASO970.JOIN.AMBOSDEC,DISP=SHR
+//* EL FICHERO ESTA ORDENADO (46,10,57,4,18,9) - POL, SUP, EXPEDTE
+//SORTOUT  DD  DSN=EXPLO.P0323575.B350J085.SYS003.PRUEBA,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=650,BLKSIZE=0)
+//*
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=(1,6,A,8,3,A),FORMAT=BI
+ OUTREC FIELDS=(41,650)
+/*
+//**********************************************************************
+//PASO930X  EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* RENUMERO REGISTROS DEL LISTADO PARA "DESDOBLARLO"
+//**********************************************************************
+//SORTIN   DD  DSN=EXPLO.P0323575.B350JX05.SYS003.PRUEBA,DISP=SHR
+//SORTOUT  DD  DSN=EXPLO.P0323575.PASO930X.B350JX05.LISTNUM,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
+//             DCB=(DSORG=PS,RECFM=FB,LRECL=690,BLKSIZE=0)
+//*            DCB=*.SORTIN
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=COPY
+ OUTREC BUILD=(SEQNUM,6,ZD,C' 000 ',104,27,C'  ',1,650)
+/*
+//*********************************************************************
+//PASO940X EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* DESDOBLAMOS SINIESTROS DEL RESTO DEL LISTADO
+//**********************************************************************
+//*
+//SORTIN   DD  DSN=EXPLO.P0323575.PASO930X.B350JX05.LISTNUM,DISP=SHR
+//* EL FICHERO ESTA ORDENADO (46,10,57,4,18,9) - POL, SUP, EXPEDTE
+//SORTSIN  DD  DSN=EXPLO.P0323575.PASO940X.B350JX05.LIST0206,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=690,BLKSIZE=0)
+//*
+//SORTRES  DD  DSN=EXPLO.P0323575.PASO940X.B350JX05.LISTREST,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=690,BLKSIZE=0)
+//*
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=COPY
+ OPTION COPY
+  OUTFIL FNAMES=SORTSIN,INCLUDE=(13,4,CH,EQ,C'0206')
+  OUTFIL FNAMES=SORTRES,INCLUDE=(13,4,CH,NE,C'0206')
+ END
+/*
+//*
+//*********************************************************************
+//PASO950X EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* DESDOBLAMOS SINIESTROS DEL RESTO DEL LISTADO
+//**********************************************************************
+//*
+//SORTIN   DD  DSN=EXPLO.P0323575.PASO940X.B350JX05.LIST0206,DISP=SHR
+//* EL FICHERO ESTA ORDENADO (46,10,57,4,18,9) - POL, SUP, EXPEDTE
+//SORTOUT  DD  DSN=EXPLO.P0323575.PASO950X.B350JX05.LIST0206,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=690,BLKSIZE=0)
+//*
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=(46,10,A,57,4,A,18,9,A),FORMAT=BI
+/*
+//*
+//**********************************************************************
+//PASO960X  EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* CRUCE SINIESTROS EXTENDIDO CON LINEAS-LISTADO SINIESTRO
+//*******************************************************************
+//*COPY R350TE26 + EXTENSION ETIQUETA 8 POS
+//SORTJNF1 DD DSN=EXPLO.P0323575.PASO920.SORT,
+//            DISP=SHR
+//*LISTADO MOVIMIENTOS: SOLO REGISTRO 0206
+//SORTJNF2 DD DSN=EXPLO.P0323575.PASO950X.B350JX05.LIST0206,
+//            DISP=SHR
+//AMBOS1   DD DSN=EXPLO.P0323575.PASO960X.JOIN.AMBOS,
+//            DISP=(,CATLG,DELETE),SPACE=(TRK,(1000,500),RLSE),
+//            DCB=(RECFM=FB,LRECL=690,BLKSIZE=0),UNIT=(SYSDA,3)
+//AMBOS2   DD DSN=EXPLO.P0323575.PASO960X.JOIN.AMBOSDEC,
+//            DISP=(,CATLG,DELETE),SPACE=(TRK,(1000,500),RLSE),
+//            DCB=(RECFM=FB,LRECL=730,BLKSIZE=0),UNIT=(SYSDA,3)
+//F1       DD DSN=EXPLO.P0323575.PASO960X.JOIN.F1,
+//            DISP=(,CATLG,DELETE),SPACE=(TRK,(1000,500),RLSE),
+//            DCB=(RECFM=FB,LRECL=255,BLKSIZE=0),UNIT=(SYSDA,3)
+//F2       DD DSN=EXPLO.P0323575.PASO960X.JOIN.F2,
+//            DISP=(,CATLG,DELETE),SPACE=(TRK,(1000,500),RLSE),
+//            DCB=(RECFM=FB,LRECL=690,BLKSIZE=0),UNIT=(SYSDA,3)
+//SYSIN    DD *
+ JOINKEYS FILE=F1,FIELDS=(1,10,A,11,4,A,15,9,A),SORTED
+ JOINKEYS FILE=F2,FIELDS=(46,10,A,57,4,A,18,9,A),SORTED
+ JOIN UNPAIRED,F1,F2
+ REFORMAT FIELDS=(F1:1,255,F2:1,690,?)
+ SORT FIELDS=COPY
+
+ OUTFIL FNAMES=AMBOS1,INCLUDE=(946,1,CH,EQ,C'B'),
+ BUILD=(256,690)
+ OUTFIL FNAMES=AMBOS2,INCLUDE=(946,1,CH,EQ,C'B'),
+ BUILD=(1,23,150,8,249,6,C'   ',256,197,
+        C'00000000;                  ;                  ;',
+        500,2,C';',249,6,C';',159,8,C';',150,8,C';',
+        168,13,ZD,EDIT=(SI.III.IIT,TT),SIGNS=(,-),C';',
+        182,13,ZD,EDIT=(SI.III.IIT,TT),SIGNS=(,-),C';',
+        119,4,C';',385C' ')
+ OUTFIL FNAMES=F1,INCLUDE=(946,1,CH,EQ,C'1'),
+ BUILD=(1,255)
+ OUTFIL FNAMES=F2,INCLUDE=(946,1,CH,EQ,C'2'),
+ BUILD=(256,690)
+/*
+//SYSOUT   DD SYSOUT=*
+//SYSPRINT DD SYSOUT=*
+//*
+//*********************************************************************
+//PASO970X EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* DESDOBLAMOS SINIESTROS DEL RESTO DEL LISTADO
+//**********************************************************************
+//*
+//SORTIN   DD  DSN=EXPLO.P0323575.PASO960X.JOIN.AMBOSDEC,DISP=SHR
+//* EL FICHERO ESTA ORDENADO (46,10,57,4,18,9) - POL, SUP, EXPEDTE
+//SORTOUT  DD  DSN=EXPLO.P0323575.PASO970X.JOIN.AMBOSDEC,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=690,BLKSIZE=0)
+//*
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=(1,40,A),FORMAT=BI
+ INREC IFTHEN=(WHEN=INIT,
+                OVERLAY=(48:SEQNUM,3,ZD,START=1,RESTART=(1,23)))
+ OUTREC FIELDS=(41,690)
+/*
+//*
+//*********************************************************************
+//PASO980X EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* DESDOBLAMOS SINIESTROS DEL RESTO DEL LISTADO
+//**********************************************************************
+//*
+//SORTIN   DD  DSN=EXPLO.P0323575.PASO950X.B350JX05.LIST0206,DISP=SHR
+//         DD  DSN=EXPLO.P0323575.PASO940X.B350JX05.LISTREST,DISP=SHR
+//         DD  DSN=EXPLO.P0323575.PASO970X.JOIN.AMBOSDEC,DISP=SHR
+//* EL FICHERO ESTA ORDENADO (46,10,57,4,18,9) - POL, SUP, EXPEDTE
+//SORTOUT  DD  DSN=EXPLO.P0323575.B350JX85.SYS003.PRUEBA,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=650,BLKSIZE=0)
+//*
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=(1,6,A,8,3,A),FORMAT=BI
+ OUTREC FIELDS=(41,650)
+/*
+//**********************************************************************
+//PASO930Z  EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* RENUMERO REGISTROS DEL LISTADO PARA "DESDOBLARLO"
+//**********************************************************************
+//SORTIN   DD  DSN=EXPLO.P0323575.B350JZ05.SYS003.PRUEBA,DISP=SHR
+//SORTOUT  DD  DSN=EXPLO.P0323575.PASO930Z.B350JZ05.LISTNUM,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(1500,500),RLSE),
+//             DCB=(DSORG=PS,RECFM=FB,LRECL=690,BLKSIZE=0)
+//*            DCB=*.SORTIN
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=COPY
+ OUTREC BUILD=(SEQNUM,6,ZD,C' 000 ',104,27,C'  ',1,650)
+/*
+//*********************************************************************
+//PASO940Z EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* DESDOBLAMOS SINIESTROS DEL RESTO DEL LISTADO
+//**********************************************************************
+//*
+//SORTIN   DD  DSN=EXPLO.P0323575.PASO930Z.B350JZ05.LISTNUM,DISP=SHR
+//* EL FICHERO ESTA ORDENADO (46,10,57,4,18,9) - POL, SUP, EXPEDTE
+//SORTSIN  DD  DSN=EXPLO.P0323575.PASO940Z.B350JZ05.LIST0206,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=690,BLKSIZE=0)
+//*
+//SORTRES  DD  DSN=EXPLO.P0323575.PASO940Z.B350JZ05.LISTREST,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=690,BLKSIZE=0)
+//*
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=COPY
+ OPTION COPY
+  OUTFIL FNAMES=SORTSIN,INCLUDE=(13,4,CH,EQ,C'0206')
+  OUTFIL FNAMES=SORTRES,INCLUDE=(13,4,CH,NE,C'0206')
+ END
+/*
+//*
+//*********************************************************************
+//PASO950Z EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* DESDOBLAMOS SINIESTROS DEL RESTO DEL LISTADO
+//**********************************************************************
+//*
+//SORTIN   DD  DSN=EXPLO.P0323575.PASO940Z.B350JZ05.LIST0206,DISP=SHR
+//* EL FICHERO ESTA ORDENADO (46,10,57,4,18,9) - POL, SUP, EXPEDTE
+//SORTOUT  DD  DSN=EXPLO.P0323575.PASO950Z.B350JZ05.LIST0206,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=690,BLKSIZE=0)
+//*
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=(46,10,A,57,4,A,18,9,A),FORMAT=BI
+/*
+//*
+//**********************************************************************
+//PASO960Z  EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* CRUCE SINIESTROS EXTENDIDO CON LINEAS-LISTADO SINIESTRO
+//*******************************************************************
+//*COPY R350TE26 + EXTENSION ETIQUETA 8 POS
+//SORTJNF1 DD DSN=EXPLO.P0323575.PASO920.SORT,
+//            DISP=SHR
+//*LISTADO MOVIMIENTOS: SOLO REGISTRO 0206
+//SORTJNF2 DD DSN=EXPLO.P0323575.PASO950Z.B350JZ05.LIST0206,
+//            DISP=SHR
+//AMBOS1   DD DSN=EXPLO.P0323575.PASO960Z.JOIN.AMBOS,
+//            DISP=(,CATLG,DELETE),SPACE=(TRK,(1000,500),RLSE),
+//            DCB=(RECFM=FB,LRECL=690,BLKSIZE=0),UNIT=(SYSDA,3)
+//AMBOS2   DD DSN=EXPLO.P0323575.PASO960Z.JOIN.AMBOSDEC,
+//            DISP=(,CATLG,DELETE),SPACE=(TRK,(1000,500),RLSE),
+//            DCB=(RECFM=FB,LRECL=730,BLKSIZE=0),UNIT=(SYSDA,3)
+//F1       DD DSN=EXPLO.P0323575.PASO960Z.JOIN.F1,
+//            DISP=(,CATLG,DELETE),SPACE=(TRK,(1000,500),RLSE),
+//            DCB=(RECFM=FB,LRECL=255,BLKSIZE=0),UNIT=(SYSDA,3)
+//F2       DD DSN=EXPLO.P0323575.PASO960Z.JOIN.F2,
+//            DISP=(,CATLG,DELETE),SPACE=(TRK,(1000,500),RLSE),
+//            DCB=(RECFM=FB,LRECL=690,BLKSIZE=0),UNIT=(SYSDA,3)
+//SYSIN    DD *
+ JOINKEYS FILE=F1,FIELDS=(1,10,A,11,4,A,15,9,A),SORTED
+ JOINKEYS FILE=F2,FIELDS=(46,10,A,57,4,A,18,9,A),SORTED
+ JOIN UNPAIRED,F1,F2
+ REFORMAT FIELDS=(F1:1,255,F2:1,690,?)
+ SORT FIELDS=COPY
+
+ OUTFIL FNAMES=AMBOS1,INCLUDE=(946,1,CH,EQ,C'B'),
+ BUILD=(256,690)
+ OUTFIL FNAMES=AMBOS2,INCLUDE=(946,1,CH,EQ,C'B'),
+ BUILD=(1,23,150,8,249,6,C'   ',256,197,
+        C'00000000;                  ;                  ;',
+        500,2,C';',249,6,C';',159,8,C';',150,8,C';',
+        168,13,ZD,EDIT=(SI.III.IIT,TT),SIGNS=(,-),C';',
+        182,13,ZD,EDIT=(SI.III.IIT,TT),SIGNS=(,-),C';',
+        119,4,C';',385C' ')
+ OUTFIL FNAMES=F1,INCLUDE=(946,1,CH,EQ,C'1'),
+ BUILD=(1,255)
+ OUTFIL FNAMES=F2,INCLUDE=(946,1,CH,EQ,C'2'),
+ BUILD=(256,690)
+/*
+//SYSOUT   DD SYSOUT=*
+//SYSPRINT DD SYSOUT=*
+/*
+//*********************************************************************
+//PASO970Z EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* DESDOBLAMOS SINIESTROS DEL RESTO DEL LISTADO
+//**********************************************************************
+//*
+//SORTIN   DD  DSN=EXPLO.P0323575.PASO960Z.JOIN.AMBOSDEC,DISP=SHR
+//* EL FICHERO ESTA ORDENADO (46,10,57,4,18,9) - POL, SUP, EXPEDTE
+//SORTOUT  DD  DSN=EXPLO.P0323575.PASO970Z.JOIN.AMBOSDEC,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=690,BLKSIZE=0)
+//*
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=(1,40,A),FORMAT=BI
+ INREC IFTHEN=(WHEN=INIT,
+                OVERLAY=(48:SEQNUM,3,ZD,START=1,RESTART=(1,23)))
+ OUTREC FIELDS=(41,690)
+/*
+//*
+//*********************************************************************
+//PASO980Z EXEC PGM=SORT,REGION=0M
+//**********************************************************************
+//* DESDOBLAMOS SINIESTROS DEL RESTO DEL LISTADO
+//**********************************************************************
+//*
+//SORTIN   DD  DSN=EXPLO.P0323575.PASO950Z.B350JZ05.LIST0206,DISP=SHR
+//         DD  DSN=EXPLO.P0323575.PASO940Z.B350JZ05.LISTREST,DISP=SHR
+//         DD  DSN=EXPLO.P0323575.PASO970Z.JOIN.AMBOSDEC,DISP=SHR
+//* EL FICHERO ESTA ORDENADO (46,10,57,4,18,9) - POL, SUP, EXPEDTE
+//SORTOUT  DD  DSN=EXPLO.P0323575.B350JZ85.SYS003.PRUEBA,
+//             DISP=(NEW,CATLG,DELETE),
+//             UNIT=SYSDA,SPACE=(TRK,(500,100),RLSE),
+//             DCB=(RECFM=FB,LRECL=650,BLKSIZE=0)
+//*
+//SYSOUT   DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD *
+ SORT FIELDS=(1,6,A,8,3,A),FORMAT=BI
+ OUTREC FIELDS=(41,650)
+/*
+//*
+//**************************************************
+//PASO990  EXEC PGM=SORT,REGION=0M
 //**************************************************
 //SORTIN   DD  DSN=EXPLO.P0323573.B340J011.FICHA,DISP=SHR
 //SORTOUT  DD  DSN=EXPLO.P0323573.B340J011.FICHA,
@@ -2502,5 +2810,4 @@ FILEDD
 //*********************************************************************
 // INCLUDE MEMBER=FINALJOB
 //*********************************************************************
-//
 //
